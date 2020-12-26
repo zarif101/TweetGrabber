@@ -1,5 +1,6 @@
 import requests
 import pandas as pd
+import warnings
 from auth_info import *
 
 def get_tweets(username):
@@ -11,17 +12,29 @@ def get_tweets(username):
 
 def main():
     username = input('Account username: ')
+    accounts = username.split(',')
+
     save_filename = input('File to save to: ')
-    response = get_tweets(username)
-    response = response.json()
+    filenames = save_filename.split(',')
+    if len(filenames[0]) == 0:
+        filenames = [name+'.csv' for name in accounts]
+    elif len(filenames) != len(accounts):
+        warnings.warn('Number of filenames is not same as number of usernames. Usernames will also be used as filenames')
 
-    tweets = []
-    tweet_ids = []
-    for tweet in response['data']:
-        tweets.append(tweet['text'])
-        tweet_ids.append(tweet['id'])
+    idx = 0
+    for acct in accounts:
+        response = get_tweets(acct)
+        response = response.json()
 
-    ret = pd.DataFrame({'tweet_text':tweets,'tweet_ids':tweet_ids})
-    ret.to_csv(save_filename,index=False)
+        tweets = []
+        tweet_ids = []
+        for tweet in response['data']:
+            tweets.append(tweet['text'])
+            tweet_ids.append(tweet['id'])
+
+        ret = pd.DataFrame({'tweet_text':tweets,'tweet_ids':tweet_ids})
+        ret.to_csv(filenames[idx],index=False)
+
+        idx+=1
 if __name__=='__main__':
     main()
